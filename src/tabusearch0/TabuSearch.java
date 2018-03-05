@@ -63,7 +63,10 @@ public class TabuSearch {
 	private int noimprovetimes = 0;//连续无更优解的次数
 	private int bestnotimprove = 0;//最优解未更新，且当前解连续等于最优解的累积次数
 	private int count = 0;
-
+	int delta;//当前操作带来的冲突变化
+	int times;//遇到同等优秀解的次数，第一次n次以概率1/n接受,每次更新best_delta时重置为1  	
+	//领域搜索，尝试将节点i改为j色
+	int currentcolor;
 	/*
 	 * 输入参数：边邻接矩阵，节点数
 	 */
@@ -91,8 +94,8 @@ public class TabuSearch {
     				break;
     			}
     			makemove();
-    			if(moves%100000 == 0)
-    				System.out.println(moves+" "+best_conflict+","+current_conflict+","+best_delta+","+init_conflict);
+    			if(moves%200000 == 0)//每20万次迭代输出一次状态
+    				System.out.println(moves+" "+best_conflict+","+current_conflict+","+init_conflict);
     			if(istabu)tabumoves++;
     			moves++;
     		}
@@ -106,7 +109,7 @@ public class TabuSearch {
     			}
     			makemove();
     			if(moves%100000 == 0)
-        			System.out.println(moves+" "+best_conflict+","+current_conflict+","+best_delta+","+init_conflict);
+        			System.out.println(moves+" "+best_conflict+","+current_conflict+","+init_conflict);
     			if(istabu)tabumoves++;
     			moves++;
     		}
@@ -122,7 +125,9 @@ public class TabuSearch {
     	System.out.println("初始冲突数："+init_conflict);
     	System.out.println("总耗时："+(end - start)+"ms");
     	System.out.println("迭代次数："+(moves-1));
-    	System.out.println("平均每秒迭代次数："+((moves-1)/(end - start)));
+    	double sectime = (end - start)/1000;
+    	double timespers = moves/sectime;
+    	System.out.println("平均每秒迭代次数："+timespers);
     	System.out.println("执行禁忌操作次数："+tabumoves);
     	testsolution();
     	
@@ -131,13 +136,13 @@ public class TabuSearch {
     /*
      * 做出动作
      */
+    int m_i,m_j;//为了不在findmove，makemove中创建局部变量，提升效率
     private void makemove(){                                  
-    		
     		//更新邻接颜色表,按照邻接矩阵受影响者为move_i的所有邻居
-        	for(int i = 0 ; i < lor[move_i] ; i++){
-        		int j = matrix[move_i][i];//j表示move_i的i号邻居
-        		adjacentColorTable[j][solution[move_i]]--;//旧色冲突数-1
-        		adjacentColorTable[j][move_j]++;//新色冲突数+1
+        	for(m_i = 0 ; m_i < lor[move_i] ; m_i++){
+        		m_j = matrix[move_i][m_i];//j表示move_i的i号邻居
+        		adjacentColorTable[m_j][solution[move_i]]--;//旧色冲突数-1
+        		adjacentColorTable[m_j][move_j]++;//新色冲突数+1
         	}
         	//更新当前冲突
         	current_conflict += best_delta;
@@ -151,61 +156,64 @@ public class TabuSearch {
         	if(best_delta >= 0)noimprovetimes++;
         	else noimprovetimes = 0;
         	//更新禁忌表
-//        	tabuTable[move_i][move_j] = moves + current_conflict*random.nextInt(10) 
-//        								+ noimprovetimes/20;
-        	tabuTable[move_i][move_j] = moves + current_conflict + random.nextInt(10)+1;
+        	tabuTable[move_i][move_j] = moves + current_conflict*random.nextInt(10)+1;
+        								//+ noimprovetimes/20;
+//        	tabuTable[move_i][move_j] = moves + current_conflict + random.nextInt(10)+1;
     }
     
     /*
      * 查找可行的领域动作
      * 执行后改变全局变量（返回）best_delta , move_i , move_j
      */
+    int f_i,f_j;//为了不在findmove，makemove中创建局部变量，提升效率
     private void findmove(){
     	best_delta = Integer.MAX_VALUE;//历史最优动作带来的冲突数变化，初始为极大值
-    	int delta = 0;//当前操作带来的冲突变化
-    	int[][] s = new int[nodes][colors];//领域动作,表示将i节点置为j色冲突数的变化值
-    	int times = 1;//遇到同等优秀解的次数，第一次n次以概率1/n接受,每次更新best_delta时重置为1  	
+    	delta = 0;//当前操作带来的冲突变化
+    	times = 1;//遇到同等优秀解的次数，第一次n次以概率1/n接受,每次更新best_delta时重置为1  	
     	//领域搜索，尝试将节点i改为j色
-    	int currentcolor;
-    	for(int i = 0 ; i < nodes ; i ++){
-    		currentcolor = solution[i];
-    		if(adjacentColorTable[i][currentcolor]>0){
-    			for(int j = 0 ; j < colors ; j++){
-        			if(j != currentcolor){//若将要改变的颜色不是本来的颜色
+    	for(f_i = 0 ; f_i < nodes ; f_i ++){
+    		currentcolor = solution[f_i];
+    		if(adjacentColorTable[f_i][currentcolor]>0){
+    			for(f_j = 0 ; f_j < colors ; f_j++){
+        			if(f_j != currentcolor){//若将要改变的颜色不是本来的颜色
         				//计算delta值=新色邻居数-旧色邻居数
-        				delta = adjacentColorTable[i][j] - adjacentColorTable[i][currentcolor];   				
+        				delta = adjacentColorTable[f_i][f_j] - adjacentColorTable[f_i][currentcolor];   				
         				if(delta < best_delta){//若该操作在领域中为历史最优
         					//若该操作被禁忌
-        					if(tabuTable[i][j] > moves){
+        					if(tabuTable[f_i][f_j] > moves){
         						//但该禁忌操作能改善全局最优解，该解可候选
         						if(current_conflict + delta < best_conflict){    							
-        							move_i = i;
-        							move_j = j;        							
+        							move_i = f_i;
+        							move_j = f_j;        							
                 					times = 1;
                 					best_delta = delta;
+                					istabu = true;
                 					//一旦接受一个禁忌解，best_delta水平提高，之后所有接受的解必都能改善全局解
         						}
         					}
         					else{//若未被禁忌
-        						move_i = i;
-        						move_j = j;
+        						move_i = f_i;
+        						move_j = f_j;
             					best_delta = delta;		
             					times = 1;
+            					istabu = false;
         					}
         				}
         				//若该操作与最优解同等优，是第n次遇到则以1/n的概率接受这个解，使每个遇到的解都是1/n的机会被接受
         				//由于delta未变，更新解时不更新delta，times也不重置
         				else if(delta == best_delta && random.nextInt(times++) == 0){    					
-        					if(tabuTable[i][j] > moves){//若该操作被禁忌
+        					if(tabuTable[f_i][f_j] > moves){//若该操作被禁忌
         						//但该禁忌操作能改善全局最优解，该解可候选，保存禁忌解
         						if(current_conflict + delta < best_conflict){    							
-        							move_i = i;
-        							move_j = j;           							
+        							move_i = f_i;
+        							move_j = f_j;  
+        							istabu = true;
         						}
         					}
         					else{//若未被禁忌,保存该非禁忌解
-        						move_i = i;
-        						move_j = j;	
+        						move_i = f_i;
+        						move_j = f_j;	
+        						istabu = false;
         					}
         				}
         			}
