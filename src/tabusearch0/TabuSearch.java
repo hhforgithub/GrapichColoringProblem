@@ -156,7 +156,7 @@ public class TabuSearch {
         	if(best_delta >= 0)noimprovetimes++;
         	else noimprovetimes = 0;
         	//更新禁忌表
-        	tabuTable[move_i][move_j] = moves + current_conflict*random.nextInt(10)+1;
+        	tabuTable[move_i][move_j] = moves + current_conflict*(random.nextInt(10)+1);
         								//+ noimprovetimes/20;
 //        	tabuTable[move_i][move_j] = moves + current_conflict + random.nextInt(10)+1;
     }
@@ -201,20 +201,22 @@ public class TabuSearch {
         				}
         				//若该操作与最优解同等优，是第n次遇到则以1/n的概率接受这个解，使每个遇到的解都是1/n的机会被接受
         				//由于delta未变，更新解时不更新delta，times也不重置
-        				else if(delta == best_delta && random.nextInt(times++) == 0){    					
-        					if(tabuTable[f_i][f_j] > moves){//若该操作被禁忌
-        						//但该禁忌操作能改善全局最优解，该解可候选，保存禁忌解
-        						if(current_conflict + delta < best_conflict){    							
-        							move_i = f_i;
-        							move_j = f_j;  
-        							istabu = true;
-        						}
-        					}
-        					else{//若未被禁忌,保存该非禁忌解
-        						move_i = f_i;
-        						move_j = f_j;	
-        						istabu = false;
-        					}
+        				else if(delta == best_delta){
+        					if(random.nextInt(times++) == 0){
+        						if(tabuTable[f_i][f_j] > moves){//若该操作被禁忌
+            						//但该禁忌操作能改善全局最优解，该解可候选，保存禁忌解
+            						if(current_conflict + delta < best_conflict){    							
+            							move_i = f_i;
+            							move_j = f_j;  
+            							istabu = true;
+            						}
+            					}
+            					else{//若未被禁忌,保存该非禁忌解
+            						move_i = f_i;
+            						move_j = f_j;	
+            						istabu = false;
+            					}
+        					}	
         				}
         			}
         		}
