@@ -9,7 +9,7 @@ import java.io.IOException;
 import java.util.Random;
 import java.util.Vector;
 
-public class Launcher {
+public class Launcher_TS {
 	private static long loadtime;//文件读取耗时
 	
 	public static void main(String[] args) {

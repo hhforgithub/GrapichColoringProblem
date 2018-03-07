@@ -3,15 +3,6 @@ package tabusearch0;
 import java.awt.Point;
 import java.util.Random;
 
-/*
- * 在邻域动作中挑选最佳的禁忌或者非禁忌移动。
- * 当最佳禁忌移动满足“特赦准则”时选择最佳禁忌移动，否则选择非禁忌移动。
- * 同时将本次移动记录在禁忌表中
- * 算法终止条件是求出解，或者达到设定的迭代次数。
- * 
- * 特赦准则：最佳禁忌移动的目标值小于历史最佳冲突best_conflict且小于当前非禁忌移动的值,
- * 			则可接受禁忌移动的值，否则接受非禁忌移动的值。
- */
 public class TabuSearch {
 	private int[][] matrix;//包含边信息的邻接矩阵
 	
@@ -20,8 +11,6 @@ public class TabuSearch {
 	private int nodes;//节点个数
 	
 	private long moves;//当前迭代步数
-	
-	private long maxmoves;//最大迭代次数，可作为为终止条件之一
 	
 	private int colors;//目标解颜色数，有可行解时终止，或-1再计算新目标
 	
@@ -46,12 +35,6 @@ public class TabuSearch {
 	 * */
 	private long[][] tabuTable;
 	
-	/* tabutenture，禁忌表长
-	 * 动态表长，与冲突数有关，并有额外随机增量
-	 * 值=moves + f + random(1-10);
-	 * */
-	private int[][] tabutenture;
-	
 	/*********用于findmove() makemove()的变量**********/
 	private int move_i,move_j;//表示当前最优操作，将i点染j色
 	private int best_delta;//表示当前最优操作带来的冲突数改变量
@@ -60,9 +43,6 @@ public class TabuSearch {
 	
 	private long inittime;//初始化耗时
 	private long tabumoves;//执行禁忌操作的次数
-	private int noimprovetimes = 0;//连续无更优解的次数
-	private int bestnotimprove = 0;//最优解未更新，且当前解连续等于最优解的累积次数
-	private int count = 0;
 	int delta;//当前操作带来的冲突变化
 	int times;//遇到同等优秀解的次数，第一次n次以概率1/n接受,每次更新best_delta时重置为1  	
 	//领域搜索，尝试将节点i改为j色
@@ -80,13 +60,12 @@ public class TabuSearch {
 	 * 调用此函数开始执行算法
 	 * 输入参数：目标解颜色数，最大迭代次数,最大迭代次数为0则为无次数限制
 	 */
-    public void Start(int cc,long mm){
+    public void Start(int cc,long maxmoves){
     	long start = System.currentTimeMillis();//开始时间
     	colors = cc;
-    	maxmoves = mm;
     	tabumoves = 0;//执行禁忌操作的次数，无关算法，仅统计
     	init();
-    	if(mm <= 0){//无迭代次数限制，终止条件为冲突数为0
+    	if(maxmoves <= 0){//无迭代次数限制，终止条件为冲突数为0
     		while(best_conflict != 0){
     			findmove();
     			if(best_delta == Integer.MAX_VALUE){
@@ -101,7 +80,7 @@ public class TabuSearch {
     		}
     	}
     	else{//终止条件为冲突数为0 或 迭代次数到达限制
-    		while(best_conflict != 0 && moves <= mm){
+    		while(best_conflict != 0 && moves <= maxmoves){
     			findmove();
     			if(best_delta == Integer.MAX_VALUE){
     				System.out.println("所有领域操作被禁忌，无法求解");
@@ -153,8 +132,6 @@ public class TabuSearch {
         	//更新解
         	solution[move_i] = move_j;
         	
-        	if(best_delta >= 0)noimprovetimes++;
-        	else noimprovetimes = 0;
         	//更新禁忌表
         	tabuTable[move_i][move_j] = moves + current_conflict*(random.nextInt(10)+1);
         								//+ noimprovetimes/20;
@@ -315,34 +292,6 @@ public class TabuSearch {
     	System.out.println("答案冲突个数为："+cf);
     	
     }
-    
-    //随机重置解
-    private void diversification(){
-    	for(int i = 0 ; i < nodes ; i++){
-    		solution[i] = random.nextInt(colors);
-    	}
-    	for(int i = 0 ; i < nodes ; i++){//全置零
-    		for(int j = 0 ; j < colors ; j++){
-    			adjacentColorTable[i][j] = 0;
-    		}
-    	}
-    	for(int i = 0 ; i < nodes ; i++){
-    		for(int j = 0 ; j < lor[i] ; j++){
-    			adjacentColorTable[i][solution[matrix[i][j]]]++;
-    			//matrix访问i的邻居，solution访问邻居颜色，在i邻接颜色表中的对应颜色+1
-    		}
-    	}
-    	best_conflict = 0;
-    	for(int i = 0 ; i < nodes ; i++){
-    		best_conflict += adjacentColorTable[i][solution[i]];
-    	}
-    	best_conflict /= 2;
-    	init_conflict = best_conflict;
-    	current_conflict = best_conflict;
-    	
-    }
 	
 }
-/*
- * 改进:搜索领域只考虑冲突大于0的点
- */
+
