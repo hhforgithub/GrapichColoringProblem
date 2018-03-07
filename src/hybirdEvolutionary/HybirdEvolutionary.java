@@ -78,12 +78,10 @@ public class HybirdEvolutionary {//种群数为2
     	while(true){
     		tabusearch_a(mm);
     		if(best_conflict == 0){
-    			System.out.println("A jump out"+best_conflict);
     			break;
     		}
     		tabusearch_b(mm);
     		if(best_conflict == 0){
-    			System.out.println("B jump out"+best_conflict);
     			break;
     		}
     		
@@ -100,7 +98,7 @@ public class HybirdEvolutionary {//种群数为2
     	
     	long end = System.currentTimeMillis();//结束时间
     	total_time = end - start;
-    	printsolution();
+    	printsolution(mm);
     }
     
     /*
@@ -151,6 +149,7 @@ public class HybirdEvolutionary {//种群数为2
      */
     private int s_i,s_j;
     private void succeed(){
+    	//随机取代a或b，效果优于取代较差者
     	if(random.nextBoolean()){//取代a
     		for(s_i = 0 ; s_i < nodes ; s_i++){
     			solution_a[s_i] = tmpsolution[s_i];
@@ -518,7 +517,7 @@ public class HybirdEvolutionary {//种群数为2
     	
     }
     
-    private void printsolution(){
+    private void printsolution(int mm){
     	//输出结果
     	System.out.println("结果为");
     	for(int i = 0 ; i < nodes ; i++){
@@ -530,8 +529,8 @@ public class HybirdEvolutionary {//种群数为2
     	System.out.println("总耗时："+total_time+"ms");
     	System.out.println("进化代数："+gen);
     	double sectime = total_time/1000;
-    	double timespers = gen/sectime;
-    	System.out.println("平均每秒迭代次数："+timespers);
+    	double timespers = gen*mm/sectime;
+    	System.out.println("平均每秒迭代次数（禁忌搜索步数）："+timespers);
     	testsolution(solution);
     	
     }
