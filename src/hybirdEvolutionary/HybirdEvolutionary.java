@@ -107,7 +107,7 @@ public class HybirdEvolutionary {//种群数为2
      */
     private int cross_count;//父代链表的剩余元素,子代继承集合数计数（为colors时终止）
     private void crossoperation(){
-    	//转换为链表
+    	//转换为链表s
     	arraytolinked(solution_a,ll_a);
     	arraytolinked(solution_b,ll_b);
     	cross_count = 0;
