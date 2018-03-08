@@ -110,24 +110,22 @@ public class HybirdEvolutionary {//种群数为2
     	//转换为链表s
     	arraytolinked(solution_a,ll_a);
     	arraytolinked(solution_b,ll_b);
-    	cross_count = 0;
+    	cross_count = 1;
     	//子代继承父代独立集，从最大独立集的开始，继承colors次，剩余未继承的元素随机赋值给子代
     	while(true){
     		findmax(ll_a);
-    		if(max == 0)break;
+    		//if(max == 0)break;
     		//System.out.println("from a color="+maxcolor+" num="+max);
     		ll_son[maxcolor].addAll(ll_a[maxcolor]);
     		deletaElement(ll_b,ll_a[maxcolor]);
-    		if(cross_count == colors)break;
-    		cross_count++;
+    		if(cross_count++ == colors-2)break;
     		
     		findmax(ll_b);
-    		if(max == 0)break;
+    		//if(max == 0)break;
     		//System.out.println("from b color="+maxcolor+" num="+max);
     		ll_son[maxcolor].addAll(ll_b[maxcolor]);
     		deletaElement(ll_a,ll_b[maxcolor]);
-    		if(cross_count == colors)break;
-    		cross_count++;
+    		if(cross_count++ == colors-2)break;
     	}
     	//将父代链表中的剩余元素随机赋值给子代链表，同时在两个父代中删除这些元素
     	for(i = 0 ; i < colors ;i++){
@@ -238,14 +236,24 @@ public class HybirdEvolutionary {//种群数为2
     }
     
     //查找数组中最大值,输入只能为ll_a_length 或 ll_a_length ,长度为colors,返回改变maxcolor
-    int fm_i,max,maxcolor;
+    int fm_i,max,maxcolor,count_max;
     private void findmax(LinkedList[] ll){
-    	max = -1;
+    	max = 0;
     	for(fm_i = 0 ; fm_i < colors ; fm_i++){
-    		if(ll[fm_i].size()>max){
-    			max = ll[fm_i].size();
-    			maxcolor = fm_i;
+    		if(ll[fm_i].size()>=max){
+    			if(ll[fm_i].size()==max){
+    				if(random.nextInt(count_max++) == 0){
+        				max = ll[fm_i].size();
+            			maxcolor = fm_i;
+        			}
+        		}
+    			else {
+    				max = ll[fm_i].size();
+        			maxcolor = fm_i;
+        			count_max = 2;//统计同为最大值的个数，用于产生随机数，第n个以1/n概率接受
+    			}
     		}
+    		
     	}
     }
     

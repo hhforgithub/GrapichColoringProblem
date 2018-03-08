@@ -32,7 +32,7 @@ public class Launcher_HE {
 		HybirdEvolutionary he = new HybirdEvolutionary(matrix, lor, nodes);
 		//he.test_atllta(17);
 		//he.test_crossoperation(17);
-		he.Start(48, 1000);
+		he.Start(47, 1000);
 		
 		System.out.println("文件读取耗时："+loadtime+"ms");
 	}
